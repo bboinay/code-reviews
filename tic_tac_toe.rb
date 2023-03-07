@@ -2,6 +2,18 @@ BLANK_CHAR = '-'
 PLAYER_MARK = 'X'
 AI_MARK = 'O'
 
+O_LINES = [
+  '  __ ',
+  ' |  |',
+  ' |__|'
+]
+
+X_LINES = [
+  '     ',
+  '  \/ ',
+  '  /\ '
+]
+
 INPUT_MAP = [
   %w(q w e),
   %w(a s d),
@@ -23,13 +35,19 @@ INPUT_DIAGRAM = "
             |  Z  |  X  |  C  |                     |     |
             |     |     |     |                  Z  |  X  |  C
          ```|`````|`````|````` ``                   |     |
+\n\n"
+
+WELCOME_MESSAGE = "\n
++------------------------------------------------------------------------------+
+|    welcome to tic-tac-toe! Use QWE-ASD-ZXC to select a starting square.      |
+|        Players receive 1 point for a win, and 0.5 points for a draw.         |
++------------------------------------------------------------------------------+
 "
 
-WELCOME_MESSAGE = "
-+------------------------------------------------------------------------------+
-|    welcome to tic-tac-toe! use QWE-ASD-ZXC to select a starting square:      |
-+------------------------------------------------------------------------------+
-"
+def display_welcome_info
+  puts WELCOME_MESSAGE
+  puts INPUT_DIAGRAM
+end
 
 def print_array(array)
   array.each { |row| p row }
@@ -73,21 +91,56 @@ def new_board
   array
 end
 
-def print_score_row(row, score)
-  print "Player: #{score[:player]}".center((80 - 5) / 2)
-  print row.join(' ')
-  print "AI: #{score[:ai]}".center((80 - 5) / 2) + "\n"
+def left_score(score)
+  "Player: #{score[:player]}".center((80 - 19) / 2)
 end
 
-def display_board_and_score(board, score)
-  board.each_with_index do |row, index|
-    if index != board.size / 2
-      puts row.join(' ').center(80)
-    else
-      print_score_row(row, score)
-    end
+def right_score(score)
+  "AI: #{score[:ai]}".center((80 - 17) / 2) + "\n"
+end
+
+def print_big_char(char_lines, line_to_print)
+  case char_lines.downcase
+  when 'x'
+    print X_LINES[line_to_print]
+  when 'o'
+    print O_LINES[line_to_print]
+  else
+    print ' ' * 5
   end
-  puts ""
+end
+
+def clear_screen
+  puts "\n" * 20
+end
+
+def print_board_horizontal(r, score, left_pad)
+  if r == 0
+    puts ' ' * left_pad + '-----+-----+-----'
+  elsif r == 1
+    puts left_score(score) + '-----+-----+-----' + right_score(score)
+  end
+end
+
+def print_board(board, score)
+  left_pad = 30
+  board.each_with_index do |row, r|
+    3.times do |i|
+      print ' ' * left_pad
+      row.each_with_index do |char, c|
+        print_big_char(char, i)
+        print '|' unless c == 2
+        puts '' if c == 2
+      end
+    end
+    print_board_horizontal(r, score, left_pad)
+  end
+end
+
+def display_screen(board, score)
+  display_welcome_info
+  print_board(board, score)
+  puts "\n" * 3
 end
 
 def valid_input_char?(char)
@@ -234,12 +287,12 @@ def display_result(board)
   when 'a'
     puts "ai wins"
   when 'd'
-    puts 'tie!' # 'LAUREN WINS!'
+    puts 'tie!'
   end
 end
 
 def display_end_game(board, score)
-  display_board_and_score(board, score)
+  display_screen(board, score)
   display_result(board)
 end
 
@@ -258,7 +311,7 @@ def player_turn!(board)
   loop do
     # input validation loop
     loop do
-      input_char = gets.chomp
+      input_char = gets.chomp.downcase
       break if valid_input_char?(input_char)
       puts "whoops, invald input! use QWE-ASD-ZXC to select a square."
     end
@@ -274,28 +327,24 @@ def player_turn!(board)
   # end of move validation loop
 end
 
-# p get_diagonal(INPUT_MAP)
-# p get_diagonal(rotate_board(INPUT_MAP))
-
 # repeating games loop
 score = { player: 0, ai: 0 }
 loop do
-  puts "\n" + WELCOME_MESSAGE + "\n"
-  puts INPUT_DIAGRAM + "\n"
   board = new_board
   turn = [-1, 1].sample
   # game loop
   loop do
-    display_board_and_score(board, score)
+    display_screen(board, score)
     player_turn!(board) if turn == 1
     ai_turn!(board) if turn == -1
+    clear_screen
     break if game_over?(board)
     turn *= -1
   end
   # end of game loop
   update_scores(board, score)
   display_end_game(board, score)
-  puts "play again?"
+  puts "play again? (y/n)"
   play_again = gets.chomp
   break if play_again.downcase[0] == 'n'
 end
