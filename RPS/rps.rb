@@ -101,7 +101,12 @@ end
 
 class Move
   include Comparable
-  GAME_CHOICES = %w(r p sc l sp)
+  MOVE_HIERARCHY = { 'r' => %w(sc l),
+                     'p' => %w(sp r),
+                     'sc' => %w(l p),
+                     'l' => %w(p sp),
+                     'sp' => %w(sc r) }
+  GAME_CHOICES = MOVE_HIERARCHY.keys.map(&:to_s)
   POSSIBLE_PLAYER_CHOICES = GAME_CHOICES + %w(q)
 
   def initialize(value)
@@ -113,27 +118,27 @@ class Move
   end
 
   def rock?
-    @value == 'r'
+    value == 'r'
   end
 
   def paper?
-    @value == 'p'
+    value == 'p'
   end
 
   def scissors?
-    @value == 'sc'
+    value == 'sc'
   end
 
   def lizard?
-    @value == 'l'
+    value == 'l'
   end
 
   def spock?
-    @value == 'sp'
+    value == 'sp'
   end
 
   def quit?
-    @value == 'q'
+    value == 'q'
   end
 
   def valid?
@@ -141,17 +146,13 @@ class Move
   end
 
   def to_s
-    @value
+    value
   end
 
   def <=>(other)
     if value == other.value
       0
-    elsif rock? && (other.scissors? || other.lizard?) ||
-          paper? && (other.spock? || other.rock?) ||
-          scissors? && (other.lizard? || other.paper?) ||
-          lizard? && (other.paper? || other.spock?) ||
-          spock? && (other.scissors? || other.rock?)
+    elsif MOVE_HIERARCHY[value].include?(other.value)
       1
     else
       -1
